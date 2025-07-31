@@ -1,179 +1,347 @@
 name: Continuous Integration
-
 on:
   push:
     branches:
-      - master
-    paths: ['.github/workflows/**', '**/Makefile', '**/*.c', '**/*.h', '**/*.py']
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths: ['**/Makefile', '**/*.c', '**/*.h', '**/*.py']
-  # for manual triggering
-  workflow_dispatch:
+      - main
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-
 jobs:
-  # check basic builds to avoid breaking changes
-  ubuntu-focal-make:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Clone
-        id: checkout
-        uses: actions/checkout@v3
-
-      - name: Dependencies
-        id: depends
-        run: |
-          sudo apt-get update
-          sudo apt-get install build-essential -y
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-
-      - name: Pip setup
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Build
-        id: make_build
-        run: |
-          make
-      - name: Build runfast
-        id: make_build_runfast
-        run: |
-          make runfast
-      - name: Test with pytest
-        run: |
-          pytest
   macOS-latest-make:
     runs-on: macos-latest
-
     steps:
-      - name: Clone
-        id: checkout
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: start-measurement
+      - id: checkout
+        name: Clone
         uses: actions/checkout@v3
-
-      - name: Dependencies
+      - continue-on-error: true
         id: depends
-        continue-on-error: true
-        run: |
-          brew update
+        name: Dependencies
+        run: 'brew update
+
+          '
+      - id: measurement-3
+        name: Record Measurement After Dependencies
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Dependencies
+          task: get-measurement
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
-
+          python-version: '3.10'
       - name: Pip setup
-        run: |
-          python -m pip install --upgrade pip
+        run: 'python -m pip install --upgrade pip
+
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Build clang
-        id: make_build_clang
-        run: |
-          make run CC=clang
-      - name: Build
-        id: make_build
-        run: |
-          make
-      - name: Build runfast
-        id: make_build_runfast
-        run: |
-          make runfast
+
+          '
+      - id: measurement-6
+        name: Record Measurement After Pip setup
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Pip setup
+          task: get-measurement
+      - id: make_build_clang
+        name: Build clang
+        run: 'make run CC=clang
+
+          '
+      - id: measurement-8
+        name: Record Measurement After Build clang
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build clang
+          task: get-measurement
+      - id: make_build
+        name: Build
+        run: 'make
+
+          '
+      - id: measurement-10
+        name: Record Measurement After Build
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build
+          task: get-measurement
+      - id: make_build_runfast
+        name: Build runfast
+        run: 'make runfast
+
+          '
+      - id: measurement-12
+        name: Record Measurement After Build runfast
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build runfast
+          task: get-measurement
       - name: Test with pytest
         run: pytest
+      - id: measurement-14
+        name: Record Measurement After Test with pytest
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Test with pytest
+          task: get-measurement
+      - id: display-measurement
+        name: Display Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: display-results
+      - name: Save Total Energy Consumption Data
+        run: echo '${{ steps.final-measurement.outputs.data-total-json }}' > total_energy_consumption.json
+      - name: Upload Energy Consumption Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: total-energy-consumption
+          path: total_energy_consumption.json
+  ubuntu-focal-make:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: start-measurement
+      - id: checkout
+        name: Clone
+        uses: actions/checkout@v3
+      - id: depends
+        name: Dependencies
+        run: 'sudo apt-get update
 
+          sudo apt-get install build-essential -y
 
+          '
+      - id: measurement-3
+        name: Record Measurement After Dependencies
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Dependencies
+          task: get-measurement
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Pip setup
+        run: 'python -m pip install --upgrade pip
 
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+          '
+      - id: measurement-6
+        name: Record Measurement After Pip setup
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Pip setup
+          task: get-measurement
+      - id: make_build
+        name: Build
+        run: 'make
+
+          '
+      - id: measurement-8
+        name: Record Measurement After Build
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build
+          task: get-measurement
+      - id: make_build_runfast
+        name: Build runfast
+        run: 'make runfast
+
+          '
+      - id: measurement-10
+        name: Record Measurement After Build runfast
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build runfast
+          task: get-measurement
+      - name: Test with pytest
+        run: 'pytest
+
+          '
+      - id: measurement-12
+        name: Record Measurement After Test with pytest
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Test with pytest
+          task: get-measurement
+      - id: display-measurement
+        name: Display Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: display-results
+      - name: Save Total Energy Consumption Data
+        run: echo '${{ steps.final-measurement.outputs.data-total-json }}' > total_energy_consumption.json
+      - name: Upload Energy Consumption Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: total-energy-consumption
+          path: total_energy_consumption.json
   windows-latest-make:
     runs-on: windows-latest
+    steps:
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: start-measurement
+      - id: checkout
+        name: Clone
+        uses: actions/checkout@v3
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+      - name: Setup MSVC ${{ matrix.arch }}
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      - if: matrix.arch != 'amd64_arm64'
+        name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - if: matrix.arch != 'amd64_arm64'
+        name: Pip setup
+        run: "python -m pip install --upgrade pip\nif (Test-Path requirements.txt)\
+          \ {\n  pip install -r requirements.txt\n}\n"
+      - id: measurement-6
+        name: Record Measurement After Pip setup
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Pip setup
+          task: get-measurement
+      - id: build_msvc
+        name: Build ${{ matrix.arch }}
+        run: '.\build_msvc.bat
 
+          '
+      - id: measurement-8
+        name: Record Measurement After Build ${{ matrix.arch }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build ${{ matrix.arch }}
+          task: get-measurement
+      - if: matrix.arch != 'amd64_arm64'
+        name: Test with pytest
+        run: pytest
+      - id: measurement-10
+        name: Record Measurement After Test with pytest
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Test with pytest
+          task: get-measurement
+      - id: display-measurement
+        name: Display Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: display-results
+      - name: Save Total Energy Consumption Data
+        run: echo '${{ steps.final-measurement.outputs.data-total-json }}' > total_energy_consumption.json
+      - name: Upload Energy Consumption Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: total-energy-consumption
+          path: total_energy_consumption.json
     strategy:
-      fail-fast: false  #necessary, otherwise the matrix breaks
+      fail-fast: false
       matrix:
         arch:
           - amd64
           - amd64_x86
           - amd64_arm64
-
-    steps:
-      - name: Clone
-        id: checkout
-        uses: actions/checkout@v3
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
-
-      - name: Setup MSVC ${{ matrix.arch }}
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: ${{ matrix.arch }}
-
-      - name: Set up Python 3.10
-        if: matrix.arch != 'amd64_arm64'
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-
-      - name: Pip setup
-        if: matrix.arch != 'amd64_arm64'
-        run: |
-          python -m pip install --upgrade pip
-          if (Test-Path requirements.txt) {
-            pip install -r requirements.txt
-          }
-      - name: Build ${{ matrix.arch }}
-        id: build_msvc
-        run: |
-          .\build_msvc.bat
-      #cross-comiled, cannot be run on host
-      - name: Test with pytest
-        if: matrix.arch != 'amd64_arm64'
-        run: pytest
-
   windows-latest-mingw:
-    runs-on: windows-latest
-
     defaults:
       run:
         shell: msys2 {0}
-
-    strategy:
-      matrix:
-        include:
-          - { sys: mingw64, env: x86_64 }
-
+    runs-on: windows-latest
     steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v3
-
-      - uses: msys2/setup-msys2@v2
-        id: setup-msys2
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
         with:
-          msystem: ${{ matrix.sys }}
+          json-output: true
+          task: start-measurement
+      - id: checkout
+        name: Checkout
+        uses: actions/checkout@v3
+      - id: setup-msys2
+        uses: msys2/setup-msys2@v2
+        with:
           install: mingw-w64-${{matrix.env}}-gcc make
+          msystem: ${{ matrix.sys }}
+      - id: build_mingw
+        name: Build ${{ matrix.sys }} ${{ matrix.env }}
+        run: 'make win64
 
-      - name: Build ${{ matrix.sys }} ${{ matrix.env }}
-        id: build_mingw
-        run: |
-          make win64
+          '
+      - id: measurement-4
+        name: Record Measurement After Build ${{ matrix.sys }} ${{ matrix.env }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Build ${{ matrix.sys }} ${{ matrix.env }}
+          task: get-measurement
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
-
+          python-version: '3.10'
       - name: Pip setup
+        run: "python -m pip install --upgrade pip\nif (Test-Path requirements.txt)\
+          \ {\n  pip install -r requirements.txt\n}\n"
         shell: powershell
-        run: |
-          python -m pip install --upgrade pip
-          if (Test-Path requirements.txt) {
-            pip install -r requirements.txt
-          }
+      - id: measurement-7
+        name: Record Measurement After Pip setup
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Pip setup
+          task: get-measurement
       - name: Test with pytest
-        shell: powershell
         run: pytest
+        shell: powershell
+      - id: measurement-9
+        name: Record Measurement After Test with pytest
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          label: Test with pytest
+          task: get-measurement
+      - id: display-measurement
+        name: Display Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de
+        with:
+          json-output: true
+          task: display-results
+      - name: Save Total Energy Consumption Data
+        run: echo '${{ steps.final-measurement.outputs.data-total-json }}' > total_energy_consumption.json
+      - name: Upload Energy Consumption Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: total-energy-consumption
+          path: total_energy_consumption.json
+    strategy:
+      matrix:
+        include:
+          - env: x86_64
+            sys: mingw64
