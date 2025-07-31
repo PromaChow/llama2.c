@@ -29,7 +29,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install build-essential -y
-
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
@@ -39,21 +38,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
       - name: Build
         id: make_build
         run: |
           make
-
       - name: Build runfast
         id: make_build_runfast
         run: |
           make runfast
-
       - name: Test with pytest
         run: |
           pytest
-
   macOS-latest-make:
     runs-on: macos-latest
 
@@ -67,7 +62,6 @@ jobs:
         continue-on-error: true
         run: |
           brew update
-
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
@@ -77,22 +71,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
       - name: Build clang
         id: make_build_clang
         run: |
           make run CC=clang
-
       - name: Build
         id: make_build
         run: |
           make
-
       - name: Build runfast
         id: make_build_runfast
         run: |
           make runfast
-
       - name: Test with pytest
         run: pytest
 
@@ -136,12 +126,10 @@ jobs:
           if (Test-Path requirements.txt) {
             pip install -r requirements.txt
           }
-
       - name: Build ${{ matrix.arch }}
         id: build_msvc
         run: |
           .\build_msvc.bat
-
       #cross-comiled, cannot be run on host
       - name: Test with pytest
         if: matrix.arch != 'amd64_arm64'
@@ -174,7 +162,6 @@ jobs:
         id: build_mingw
         run: |
           make win64
-
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
@@ -187,7 +174,6 @@ jobs:
           if (Test-Path requirements.txt) {
             pip install -r requirements.txt
           }
-
       - name: Test with pytest
         shell: powershell
         run: pytest
